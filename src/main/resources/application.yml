@@ -1,0 +1,89 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api/payments
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param
+
+spring:
+  application:
+    name: payments-service
+  profiles:
+    active: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payments_db
+    username: payments_user
+    password: secure_password_123
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 600000
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/pragma-realm
+          jwk-set-uri: http://localhost:8081/realms/pragma-realm/protocol/openid-connect/certs
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    org.hibernate: INFO
+    com.pragma.payments: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/payments-service.log
+
+jwt:
+  secret: your-256-bit-secret-for-hmac-sha256-algorithm-keep-it-safe
+  expiration: 86400000 # 24 hours in milliseconds
+  refresh-expiration: 604800000 # 7 days in milliseconds
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+    git:
+      mode: full
+
+app:
+  security:
+    roles:
+      admin: ADMIN
+      user: USER
+      merchant: MERCHANT
+    permitted-paths:
+      - "/actuator/**"
+      - "/v3/api-docs/**"
+      - "/swagger-ui/**"
+      - "/swagger-resources/**"
+  rate-limit:
+    enabled: true
+    limit: 100
+    window: 60 # in seconds
